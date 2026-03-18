@@ -28,8 +28,11 @@ def _load_config(team_name: str) -> TeamConfig | None:
     path = _config_path(team_name)
     if not path.exists():
         return None
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return TeamConfig.model_validate(data)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return TeamConfig.model_validate(data)
+    except (json.JSONDecodeError, Exception):
+        return None
 
 
 def _save_config(config: TeamConfig) -> None:

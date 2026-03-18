@@ -747,8 +747,8 @@ def task_create(
     from clawteam.team.tasks import TaskStore
 
     store = TaskStore(team)
-    blocks_list = [b.strip() for b in blocks.split(",")] if blocks else []
-    blocked_by_list = [b.strip() for b in blocked_by.split(",")] if blocked_by else []
+    blocks_list = [b.strip() for b in blocks.split(",") if b.strip()] if blocks else []
+    blocked_by_list = [b.strip() for b in blocked_by.split(",") if b.strip()] if blocked_by else []
 
     task = store.create(
         subject=subject,
@@ -820,8 +820,8 @@ def task_update(
 
     store = TaskStore(team)
     ts = TaskStatus(status) if status else None
-    blocks_list = [b.strip() for b in add_blocks.split(",")] if add_blocks else None
-    blocked_by_list = [b.strip() for b in add_blocked_by.split(",")] if add_blocked_by else None
+    blocks_list = [b.strip() for b in add_blocks.split(",") if b.strip()] if add_blocks else None
+    blocked_by_list = [b.strip() for b in add_blocked_by.split(",") if b.strip()] if add_blocked_by else None
 
     caller = AgentIdentity.from_env().agent_name
 
