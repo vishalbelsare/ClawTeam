@@ -29,6 +29,16 @@
 
 ---
 
+## 📰 News
+
+**2026-03-18** ClawTeam 项目正式公开发布。
+
+**2026-03-23** ClawTeam `v0.2.0` 今日发布。
+
+**2026-03** 当前能力基线已包含配置管理、多用户协作、Web UI、P2P 传输与团队模板。
+
+---
+
 <p align="center">
   <video src="https://github.com/user-attachments/assets/7e2f0ecd-8fe3-4970-90ac-5c9669ff060c" controls muted playsinline width="800">
     <a href="https://github.com/user-attachments/assets/7e2f0ecd-8fe3-4970-90ac-5c9669ff060c">观看演示视频</a>
@@ -509,6 +519,14 @@ clawteam spawn subprocess <your-agent> --team my-team --agent-name test --task "
 | **Phase 3** | v0.6 | Agent 市场 —— 发现和复用社区 Agent 模板 | 💡 规划中 |
 | **Phase 4** | v0.7 | 自适应调度 —— 根据 Agent 性能动态调整任务分配 | 💡 规划中 |
 | **Phase 5** | v1.0 | 生产级稳定版 —— 认证、权限、审计日志 | 💡 规划中 |
+
+### Milestones
+
+| 里程碑 | 状态 | 说明 |
+|---|---|---|
+| v0.1.x | ✅ 已发布 | 核心 CLI、团队/任务/消息流、看板、模板、打包发布。 |
+| v0.2.0 | ✅ 已发布 | 稳定性修复、文档升级、spawn/workspace 修复与 release 打包。 |
+| v0.3 | 📍 路线基线 | 文件传输 + P2P、Web UI、多用户工作流、团队模板。 |
 
 ---
 

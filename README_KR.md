@@ -33,6 +33,16 @@
 
 ---
 
+## 📰 News
+
+**2026-03-18** ClawTeam 프로젝트가 공개 출시되었습니다.
+
+**2026-03-23** ClawTeam `v0.2.0`이 오늘 릴리스되었습니다.
+
+**2026-03** 현재 기준선에는 config 관리, multi-user 워크플로, Web UI, P2P transport, team template이 포함됩니다.
+
+---
+
 ## ✨ ClawTeam의 핵심 기능
 
 <table align="center" width="100%">
@@ -629,6 +639,14 @@ clawteam config health
 | **Phase 3** | v0.6 | Agent Marketplace, 커뮤니티 템플릿 탐색 및 재사용 | 💡 검토 중 |
 | **Phase 4** | v0.7 | Adaptive Scheduling, 에이전트 성능에 따른 동적 작업 재배치 | 💡 검토 중 |
 | **Phase 5** | v1.0 | 프로덕션급 기능, auth, permissions, audit logs | 💡 검토 중 |
+
+### Milestones
+
+| Milestone | Status | Notes |
+|---|---|---|
+| v0.1.x | ✅ 출시됨 | 핵심 CLI, 팀/작업/메시지 흐름, 보드, 템플릿, 패키징 릴리스. |
+| v0.2.0 | ✅ 출시됨 | 안정화 수정, 문서 개편, spawn/workspace 수정, release 패키징. |
+| v0.3 | 📍 로드맵 기준선 | File + P2P, Web UI, multi-user workflow, team templates. |
 
 ---
 
