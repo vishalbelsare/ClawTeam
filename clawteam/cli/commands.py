@@ -2773,7 +2773,7 @@ def lifecycle_check_zombies(
             )
         console.print(
             "\n[dim]These processes did not call lifecycle on-exit. "
-            "Inspect them manually or run: clawteam lifecycle stop-agent --team <team> --agent <name>[/dim]"
+            "Inspect them manually and terminate them with your process manager if they are truly stuck.[/dim]"
         )
 
     _output({"team": team, "zombies": zombies}, _fmt)

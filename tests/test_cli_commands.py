@@ -308,3 +308,46 @@ def test_board_update_cli_is_a_compatibility_alias(tmp_path):
 
     assert result.exit_code == 0
     assert "derived automatically" in result.output
+
+
+def test_lifecycle_check_zombies_reports_clean_state(monkeypatch, tmp_path):
+    runner = CliRunner()
+    env = {
+        "HOME": str(tmp_path),
+        "CLAWTEAM_DATA_DIR": str(tmp_path / ".clawteam"),
+    }
+
+    monkeypatch.setattr("clawteam.spawn.registry.list_zombie_agents", lambda team, max_hours=2.0: [])
+
+    result = runner.invoke(app, ["lifecycle", "check-zombies", "--team", "demo"], env=env)
+
+    assert result.exit_code == 0
+    assert "No zombie agents detected" in result.output
+
+
+def test_lifecycle_check_zombies_exits_nonzero_when_found(monkeypatch, tmp_path):
+    runner = CliRunner()
+    env = {
+        "HOME": str(tmp_path),
+        "CLAWTEAM_DATA_DIR": str(tmp_path / ".clawteam"),
+    }
+
+    monkeypatch.setattr(
+        "clawteam.spawn.registry.list_zombie_agents",
+        lambda team, max_hours=2.0: [
+            {
+                "agent_name": "worker",
+                "pid": 4321,
+                "backend": "subprocess",
+                "spawned_at": 0.0,
+                "running_hours": 3.5,
+            }
+        ],
+    )
+
+    result = runner.invoke(app, ["lifecycle", "check-zombies", "--team", "demo"], env=env)
+
+    assert result.exit_code == 1
+    assert "zombie agent(s) detected" in result.output
+    assert "worker" in result.output
+    assert "process manager" in result.output
