@@ -94,6 +94,12 @@ class InboxWatcher:
     def _run_callback(self, msg: TeamMessage) -> None:
         """Execute the --exec command with message data as env vars."""
         env_extra = {
+            "CLAWTEAM_MSG_FROM": msg.from_agent or "",
+            "CLAWTEAM_MSG_TO": msg.to or "",
+            "CLAWTEAM_MSG_TYPE": msg.type.value,
+            "CLAWTEAM_MSG_CONTENT": msg.content or "",
+            "CLAWTEAM_MSG_TIMESTAMP": msg.timestamp or "",
+            "CLAWTEAM_MSG_JSON": msg.model_dump_json(by_alias=True, exclude_none=True),
             "OH_MSG_FROM": msg.from_agent or "",
             "OH_MSG_TO": msg.to or "",
             "OH_MSG_TYPE": msg.type.value,
