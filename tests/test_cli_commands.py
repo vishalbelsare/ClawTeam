@@ -369,6 +369,43 @@ def test_runtime_inject_cli_invokes_tmux_backend(monkeypatch, tmp_path):
     assert captured["envelope"].recommended_next_action == "Begin integration task T5."
 
 
+def test_runtime_inject_cli_uses_registered_backend(monkeypatch, tmp_path):
+    runner = CliRunner()
+    env = {
+        "HOME": str(tmp_path),
+        "CLAWTEAM_DATA_DIR": str(tmp_path / ".clawteam"),
+    }
+    TeamManager.create_team(
+        name="demo",
+        leader_name="leader",
+        leader_id="leader001",
+    )
+    from clawteam.spawn.registry import register_agent
+
+    register_agent("demo", "worker", backend="wsh", block_id="block-1")
+    captured = {}
+
+    class StubBackend:
+        def inject_runtime_message(self, team, agent_name, envelope):
+            captured["team"] = team
+            captured["agent"] = agent_name
+            captured["envelope"] = envelope
+            return True, "ok"
+
+    monkeypatch.setattr("clawteam.cli.commands._resolve_runtime_backend", lambda team, agent: ("wsh", StubBackend()))
+
+    result = runner.invoke(
+        app,
+        ["runtime", "inject", "demo", "worker", "--summary", "Queued update"],
+        env=env,
+    )
+
+    assert result.exit_code == 0
+    assert captured["team"] == "demo"
+    assert captured["agent"] == "worker"
+    assert captured["envelope"].summary == "Queued update"
+
+
 def test_runtime_state_cli_reports_pending_routes(tmp_path):
     runner = CliRunner()
     env = {

@@ -21,6 +21,7 @@ from clawteam.spawn.base import SpawnBackend
 from clawteam.spawn.cli_env import build_spawn_path, resolve_clawteam_executable
 from clawteam.spawn.command_validation import validate_spawn_command
 from clawteam.spawn.keepalive import build_keepalive_shell_command, build_resume_command
+from clawteam.spawn.runtime_notification import render_runtime_notification
 from clawteam.spawn.wsh_rpc import WshRpcClient
 from clawteam.team.models import get_data_dir
 
@@ -388,6 +389,27 @@ class WshBackend(SpawnBackend):
             {"name": name, "target": target, "backend": "wsh"}
             for name, target in self._blocks.items()
         ]
+
+    def inject_runtime_message(self, team: str, agent_name: str, envelope) -> tuple[bool, str]:
+        """Best-effort runtime injection into a running wsh block."""
+        from clawteam.spawn.registry import get_registry
+
+        info = get_registry(team).get(agent_name, {})
+        block_id = info.get("block_id", "") or self._blocks.get(agent_name, "")
+        if not block_id:
+            return False, f"wsh block for '{team}/{agent_name}' not found"
+        if not _is_block_alive(block_id):
+            return False, f"wsh block '{block_id}' is not alive"
+
+        if self._rpc_client is None:
+            self._rpc_client = WshRpcClient()
+        payload = render_runtime_notification(envelope)
+        if not self._rpc_client.send_input(block_id, payload):
+            return False, f"runtime injection failed for wsh block '{block_id}'"
+        if not self._rpc_client.send_input(block_id, ""):
+            return False, f"runtime submit failed for wsh block '{block_id}'"
+
+        return True, f"Injected runtime notification into wsh block {block_id}"
 
     def _confirm_workspace_trust_if_prompted(
         self,

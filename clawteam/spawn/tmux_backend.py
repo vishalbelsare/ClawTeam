@@ -9,7 +9,6 @@ import shutil
 import subprocess
 import tempfile
 import time
-from xml.sax.saxutils import escape
 
 from clawteam.spawn.adapters import (
     NativeCliAdapter,
@@ -26,6 +25,7 @@ from clawteam.spawn.base import SpawnBackend
 from clawteam.spawn.cli_env import build_spawn_path, resolve_clawteam_executable
 from clawteam.spawn.command_validation import validate_spawn_command
 from clawteam.spawn.keepalive import build_keepalive_shell_command, build_resume_command
+from clawteam.spawn.runtime_notification import render_runtime_notification
 from clawteam.team.models import get_data_dir
 
 _SHELL_ENV_KEY_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
@@ -339,7 +339,7 @@ class TmuxBackend(SpawnBackend):
             _inject_prompt_via_buffer(
                 target,
                 agent_name,
-                _render_runtime_notification(envelope),
+                render_runtime_notification(envelope),
             )
         except Exception as exc:
             return False, f"runtime injection failed for '{target}': {exc}"
@@ -718,39 +718,3 @@ def _inject_prompt_via_buffer(
         )
     finally:
         os.unlink(tmp_path)
-
-def _render_runtime_notification(envelope) -> str:
-    summary = str(getattr(envelope, "summary", "") or "").strip()
-    if not summary:
-        summary = "Runtime update"
-
-    evidence = getattr(envelope, "evidence", []) or []
-    if isinstance(evidence, str):
-        evidence = [evidence]
-    evidence_block = "\n".join(str(item) for item in evidence if item)
-
-    lines = [
-        '<clawteam_notification version="1"',
-        f'  source="{escape(str(getattr(envelope, "source", "system") or "system"))}"',
-        f'  target="{escape(str(getattr(envelope, "target", "") or ""))}"',
-        f'  channel="{escape(str(getattr(envelope, "channel", "direct") or "direct"))}"',
-        f'  priority="{escape(str(getattr(envelope, "priority", "medium") or "medium"))}">',
-        "<summary>",
-        escape(summary),
-        "</summary>",
-    ]
-
-    if evidence_block:
-        lines.extend(["<evidence>", escape(evidence_block), "</evidence>"])
-    recommended_next_action = str(getattr(envelope, "recommended_next_action", "") or "").strip()
-    if recommended_next_action:
-        lines.extend(
-            [
-                "<recommended_next_action>",
-                escape(recommended_next_action),
-                "</recommended_next_action>",
-            ]
-        )
-
-    lines.append("</clawteam_notification>")
-    return "\n".join(lines)

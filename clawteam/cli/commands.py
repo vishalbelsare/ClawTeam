@@ -1899,8 +1899,17 @@ def inbox_watch(
 # Runtime Commands
 # ============================================================================
 
-runtime_app = typer.Typer(help="Tmux-only runtime routing and live injection")
+runtime_app = typer.Typer(help="Runtime routing and live injection for supported interactive backends")
 app.add_typer(runtime_app, name="runtime")
+
+
+def _resolve_runtime_backend(team: str, agent_name: str):
+    from clawteam.spawn import get_backend
+    from clawteam.spawn.registry import get_registry
+
+    info = get_registry(team).get(agent_name, {})
+    backend_name = info.get("backend", "tmux") or "tmux"
+    return backend_name, get_backend(backend_name)
 
 
 @runtime_app.command("inject")
@@ -1918,8 +1927,7 @@ def runtime_inject(
         help="Optional recommended next action",
     ),
 ):
-    """Inject a structured runtime notification into a running tmux agent."""
-    from clawteam.spawn.tmux_backend import TmuxBackend
+    """Inject a structured runtime notification into a running agent session."""
     from clawteam.team.routing_policy import RuntimeEnvelope
 
     envelope = RuntimeEnvelope(
@@ -1932,13 +1940,18 @@ def runtime_inject(
         evidence=list(evidence),
         recommended_next_action=recommended_next_action,
     )
-    ok, status = TmuxBackend().inject_runtime_message(team, agent, envelope)
+    backend_name, backend = _resolve_runtime_backend(team, agent)
+    if not hasattr(backend, "inject_runtime_message"):
+        console.print(f"[red]Backend '{backend_name}' does not support runtime injection.[/red]")
+        raise typer.Exit(1)
+
+    ok, status = backend.inject_runtime_message(team, agent, envelope)
     if not ok:
         console.print(f"[red]{status}[/red]")
         raise typer.Exit(1)
 
     _output(
-        {"team": team, "agent": agent, "status": status},
+        {"team": team, "agent": agent, "backend": backend_name, "status": status},
         lambda data: console.print(f"[green]OK[/green] {data['status']}"),
     )
 
@@ -1955,7 +1968,7 @@ def runtime_watch(
         help="Shell command to run for each new message (msg data in env vars)",
     ),
 ):
-    """Watch an inbox and route new messages into the running tmux session."""
+    """Watch an inbox and route new messages into the running agent session."""
     from clawteam.identity import AgentIdentity
     from clawteam.team.mailbox import MailboxManager
     from clawteam.team.manager import TeamManager

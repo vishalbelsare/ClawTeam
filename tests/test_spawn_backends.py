@@ -21,6 +21,7 @@ from clawteam.spawn.tmux_backend import (
     _inject_prompt_via_buffer,
     _wait_for_cli_ready,
 )
+from clawteam.spawn.wsh_backend import WshBackend
 from clawteam.team.routing_policy import RuntimeEnvelope
 
 
@@ -1441,6 +1442,56 @@ def test_tmux_backend_runtime_injection_returns_false_when_target_missing(monkey
 
     assert ok is False
     assert "clawteam-demo:worker" in reason
+
+
+def test_wsh_backend_runtime_injection_uses_registered_block(monkeypatch, tmp_path):
+    monkeypatch.setenv("CLAWTEAM_DATA_DIR", str(tmp_path))
+    from clawteam.team.manager import TeamManager
+
+    TeamManager.create_team(name="demo", leader_name="leader", leader_id="leader001")
+    from clawteam.spawn.registry import register_agent
+
+    register_agent("demo", "worker", backend="wsh", block_id="block-1")
+    sent: list[tuple[str, str]] = []
+
+    class StubRpcClient:
+        def send_input(self, block_id, data, is_base64=False):
+            sent.append((block_id, data))
+            return True
+
+    monkeypatch.setattr("clawteam.spawn.wsh_backend._is_block_alive", lambda block_id: block_id == "block-1")
+
+    backend = WshBackend()
+    backend._rpc_client = StubRpcClient()
+    ok, reason = backend.inject_runtime_message(
+        team="demo",
+        agent_name="worker",
+        envelope=RuntimeEnvelope(source="leader", target="worker", summary="hello"),
+    )
+
+    assert ok is True
+    assert "block-1" in reason
+    assert sent[0][0] == "block-1"
+    assert "<summary>" in sent[0][1]
+    assert sent[1] == ("block-1", "")
+
+
+def test_wsh_backend_runtime_injection_returns_false_when_block_missing(monkeypatch, tmp_path):
+    monkeypatch.setenv("CLAWTEAM_DATA_DIR", str(tmp_path))
+    from clawteam.team.manager import TeamManager
+
+    TeamManager.create_team(name="demo", leader_name="leader", leader_id="leader001")
+
+    monkeypatch.setattr("clawteam.spawn.wsh_backend._is_block_alive", lambda _block_id: False)
+
+    ok, reason = WshBackend().inject_runtime_message(
+        team="demo",
+        agent_name="worker",
+        envelope=RuntimeEnvelope(source="leader", target="worker", summary="hello"),
+    )
+
+    assert ok is False
+    assert "not found" in reason
 
 
 # ---------------------------------------------------------------------------
